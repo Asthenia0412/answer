@@ -62,17 +62,25 @@ export function createCommandMethods(editor: Editor) {
 
     replaceLines: (replace: Parameters<Array<string>['map']>[0]) => {
       const { doc } = editor.state;
+      const selection = editor.state.selection.main;
+      const startLine = doc.lineAt(selection.from).number;
+      const endLine = doc.lineAt(selection.to).number;
+
+      // Collect lines in the selected range
       const lines: string[] = [];
-      for (let i = 1; i <= doc.lines; i += 1) {
+      for (let i = startLine; i <= endLine; i += 1) {
         lines.push(doc.line(i).text);
       }
 
       const newLines = lines.map(replace) as string[];
+      const startPos = doc.line(startLine).from;
+      const endPos = doc.line(endLine).to;
       const newText = newLines.join('\n');
+
       editor.dispatch({
         changes: {
-          from: 0,
-          to: editor.state.doc.length,
+          from: startPos,
+          to: endPos,
           insert: newText,
         },
       });
@@ -135,9 +143,6 @@ export function createCommandMethods(editor: Editor) {
         return;
       }
       methods.replaceLines((lineItem) => {
-        if (lineItem.trim() === '') {
-          return lineItem;
-        }
         return `1. ${lineItem}`;
       });
     },
@@ -150,9 +155,6 @@ export function createCommandMethods(editor: Editor) {
         return;
       }
       methods.replaceLines((lineItem) => {
-        if (lineItem.trim() === '') {
-          return lineItem;
-        }
         return `- ${lineItem}`;
       });
     },
